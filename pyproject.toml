@@ -52,10 +52,14 @@ panda-take-control = "panda_py.cli:take_control"
 panda-release-control = "panda_py.cli:release_control"
 
 [tool.cibuildwheel]
-manylinux-x86_64-image = "manylinux2014"
-build = [ "cp37-*", "cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*",]
+# manylinux_2_28 (RHEL 8 base) is required for libfranka >= 0.14 because it
+# pulls in Pinocchio / TinyXML2 / fmt / console_bridge, which are painful on
+# the older CentOS 7-based manylinux2014. For older libfranka (<= 0.13.x) you
+# may still need to switch this back to "manylinux2014".
+manylinux-x86_64-image = "manylinux_2_28"
+build = [ "cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*",]
 skip = [ "pp*", "*musllinux*",]
-environment = "LIBFRANKA_VER=0.9.2"
+environment = "LIBFRANKA_VER=0.20.5"
 
 [tool.cibuildwheel.linux]
 before-all = [ "./bin/before_install_centos.sh",]
