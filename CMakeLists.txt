@@ -22,6 +22,18 @@ find_package(
   REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
 
+# libfranka >= 0.14 expects downstream targets to link against the modern
+# imported target Franka::Franka. For older versions we fall back to the
+# legacy ${Franka_LIBRARIES} / ${Franka_INCLUDE_DIRS} variables.
+if (TARGET Franka::Franka)
+  set(FRANKA_TARGET Franka::Franka)
+else()
+  add_library(FrankaLegacy INTERFACE)
+  target_link_libraries(FrankaLegacy INTERFACE ${Franka_LIBRARIES})
+  target_include_directories(FrankaLegacy SYSTEM INTERFACE ${Franka_INCLUDE_DIRS})
+  set(FRANKA_TARGET FrankaLegacy)
+endif()
+
 ## _core module
 pybind11_add_module(_core
   src/_core.cpp
@@ -42,13 +54,12 @@ pybind11_add_module(_core
 
 target_link_libraries(_core PUBLIC
   Threads::Threads
-  ${Franka_LIBRARIES}
+  ${FRANKA_TARGET}
 )
 
 target_include_directories(_core SYSTEM PUBLIC
   include
   ${EIGEN3_INCLUDE_DIRS}
-  ${Franka_INCLUDE_DIRS}
 )
 
 #target_compile_definitions(_core
@@ -61,11 +72,7 @@ pybind11_add_module(libfranka
   src/libfranka.cpp)
 
 target_link_libraries(libfranka PUBLIC
-  ${Franka_LIBRARIES}
-)
-
-target_include_directories(libfranka SYSTEM PUBLIC
-  ${Franka_INCLUDE_DIRS}
+  ${FRANKA_TARGET}
 )
 
 #target_compile_definitions(libfranka
